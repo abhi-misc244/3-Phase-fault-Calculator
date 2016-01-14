@@ -1,0 +1,88 @@
+'''
+This is a calculation template of 3 phase symetrical fault
+
+This requires Y matrix, number of buses, faulted bus where 3 phase fault is located and voltage at the bus before fault.
+At first Z matririx is calculated using Y matrix.
+Following this V before fault is calculated and stored in Vd
+Then 3 phase faulted current is calculated and stored in If matrix
+Following that Vafter fault and I after fault is calculated and stored in V_after_fault and I matrix
+'''
+class fault_cal:
+    import numpy
+
+    def __init__(self, Ybus, faulted_bus):
+        import numpy
+        self.Ybus = Ybus
+        Y = self.Ybus
+        self.faulted_bus = faulted_bus
+        self.number_of_bus = int(self.Ybus.size**.5)
+
+        self.Z = numpy.linalg.inv(Y)
+        
+
+    '''    
+    #Example specific Y bus, Change after test run
+    Y = numpy.empty([4,4],'complex')
+    
+    Y[0,0] = complex(0,-16.212)
+    Y[0,1] = complex(0,5)
+    Y[0,2] = complex(0,0)
+    Y[0,3] = complex(0,6.667)
+    
+    Y[1,0] = complex(0,5)
+    Y[1,1] = complex(0,-12.5)
+    Y[1,2] = complex(0,5)
+    Y[1,3] = complex(0,2.5)
+
+    Y[2,0] = complex(0,0)
+    Y[2,1] = complex(0,5)
+    Y[2,2] = complex(0,-13.33)
+    Y[2,3] = complex(0,5)
+    
+    Y[3,0] = complex(0,6.667)
+    Y[3,1] = complex(0,2.5)
+    Y[3,2] = complex(0,5)
+    Y[3,3] = complex(0,-14.167)
+    '''
+    def three_p_fault(self, v_before_fault):
+        import numpy
+        
+        #example specific variables, add as function later
+        
+        self.faulted_bus = 2 # Where the fault is located
+        self.v_before_fault = 1.00 #in per unit for faulted bus only
+        number_of_bus = int(self.Ybus.size**.5)
+        
+        #Calculation of Vdelta
+        Vd =  numpy.zeros([number_of_bus,1],'complex')
+        Vd[self.faulted_bus-1]=self.v_before_fault
+        
+        #Calculation of Impedance matrix
+        Z = numpy.linalg.inv(self.Ybus)
+        
+        #Calculation of fault current
+        If = numpy.zeros([number_of_bus,1],'complex')
+        If[self.faulted_bus-1] = Vd[self.faulted_bus-1]/Z[self.faulted_bus-1,self.faulted_bus-1]
+        
+        #Calculation of voltage matrix after fault
+        V_after_fault = numpy.zeros([number_of_bus,1],'complex')
+        for i in range(0, number_of_bus):
+            V_after_fault[i] = (1-Z[i,self.faulted_bus-1]/Z[self.faulted_bus-1,self.faulted_bus-1])*Vd[self.faulted_bus-1]
+            if i == self.faulted_bus-1:
+                V_after_fault[i] = complex(0,0)
+        
+        #Calculation of I after fault
+        I = numpy.zeros([number_of_bus,number_of_bus],'complex')
+        
+        for i in range(0,number_of_bus-1):
+            for j in range(0,number_of_bus-1):
+                I[i,j] = -self.Ybus[i,j]*(V_after_fault[i,0]-V_after_fault[j,0])
+
+        self.If = I
+        self.Vf = V_after_fault
+       
+
+
+
+
+
